@@ -5,6 +5,7 @@
 #include <string.h>
 #include"mpi.h"
 # define MAX 50000
+#define NUM_SPAWNS 4
 int fatorial(int N) {
   int res = 1;
   for (int i = 2; i <= N; i++) {
@@ -95,7 +96,7 @@ int* geraNum(int N){
   return num;
 }
 int main(int argc, char *argv[]) {
-  int N = 9;
+  int N = atoi(argv[1]);
   int *dist = gerarPesos(N);
   int *num=geraNum(N);
   int qntCaminhos = fatorial(N - 1);
@@ -128,8 +129,8 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
   
     MPI_Get_processor_name(processor_name, &name_len);
-    int count=NUM_SPAWNS/qntCaminhos;
-    int sobra=NUM_SPAWNS%qntCaminhos;
+    int count=qntCaminhos/NUM_SPAWNS;
+    int sobra=qntCaminhos/NUM_SPAWNS;
     double t1, t2; 
     t1 = MPI_Wtime(); 
     j=0;
@@ -137,10 +138,11 @@ int main(int argc, char *argv[]) {
     src = dst = root = 0;
     MPI_Comm_spawn(worker, MPI_ARGV_NULL, NUM_SPAWNS, MPI_INFO_NULL, root, MPI_COMM_WORLD, &inter_comm, errcodes);
     printf("spawnou trabalhadores\n");
-    // envia valores de Cij e caminho para trabalhadores
+    // envia valores da permutação para trabalhadores
     for (i = 0; i < NUM_SPAWNS; i++){
       for(k=0;k<count;k++,j++){
           MPI_Send(perm[j], n, MPI_INT, i, tag, inter_comm);
+          MPI_Send(dist, N*N, MPI_INT, i, tag, inter_comm);
       }
     }
 
@@ -148,19 +150,6 @@ int main(int argc, char *argv[]) {
     MPI_Finalize();
     exit(0);
 
-/*
-  for(int i=0;i<qntCaminhos;i++){
-    c=custo(dist,perm[i],ini,n);
-    if(c<minimo){
-      minimo=c;
-      minId=i;
-    }
-  }
-  printf("Caminho minimo: ");
-    printf("%d\t",ini);
-  for(int i=0;i<n;i++)
-    printf("%d\t",perm[minId][i]);
-  printf("%d\t",ini);*/
   printf("\nCusto %d\n",minimo);
 
   return 0;

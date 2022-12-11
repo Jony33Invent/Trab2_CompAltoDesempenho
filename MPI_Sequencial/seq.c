@@ -3,7 +3,7 @@
 #include <time.h>
 #include <limits.h>
 #include"mpi.h"
-# define MAX 50000
+# define MAX 370000
 int fatorial(int N) {
   int res = 1;
   for (int i = 2; i <= N; i++) {
@@ -13,7 +13,7 @@ int fatorial(int N) {
 }
 
 int *gerarPesos(int N) {
-  srand(time(NULL));
+  srand(32);
   int *dist = (int *)malloc(N*N * sizeof(int *));
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
@@ -43,7 +43,7 @@ void swap(int *x, int *y) {
   *y = temp;
 }
 
-int perm[MAX][10];
+int perm[MAX][11];
 int permutar(int *a, int l, int r,int j, int size) {
   int i;
   if (l == r) {
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   int c;
   int minId;
 
-  mostraMatrizDistancias(N, dist);
+  //mostraMatrizDistancias(N, dist);
   printf("Total de caminhos = %d\n", qntCaminhos);
   permutar(num, 0, N-2,0,N-1);
   double t1, t2; 

@@ -26,9 +26,9 @@ int fatorial(int N) {
   }
   return res;
 }
-# define N 4
 int main(int argc, char **argv)  {
     int tag = 0, my_rank, num_proc;
+    int N=atoi(argv[1]);
     int caminho[fatorial(N)];
 
     char processor_name[MPI_MAX_PROCESSOR_NAME];
@@ -48,6 +48,7 @@ int main(int argc, char **argv)  {
 
     printf("worker nr %d\n",my_rank);
     MPI_Recv(caminho, N-1, MPI_INT, 0, tag, inter_comm, &status);
+    MPI_Recv(dist, N*N, MPI_INT, 0, tag, inter_comm, &status);
     //MPI_Br
     printf("worker nr %d (%s): received caminho",my_rank,processor_name);
     //int c=custo()
