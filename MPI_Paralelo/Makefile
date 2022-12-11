@@ -10,9 +10,9 @@ HOST_LIST = -H hal02,hal03,hal04,hal05,hal06,hal07,hal08,hal09,hal10
 WARNING_FLAGS = -Wextra -Wall
 
 seq:
-  $(CC) $(WARNING_FLAGS) ./seq.c -o seq
+  mpicc  -fopenmp ./seq.c -o seq
 run-seq: seq
-  mpirun -np $(P) $(HOST_LIST) ./seq $(N)
+  mpirun -np 1 -H hal02,hal03,hal04,hal05,hal06,hal07,hal08,hal09,hal10 ./seq 4
 worker:
   mpicc -fopenmp ./spawn-worker.c -o spawn-worker
 par:
