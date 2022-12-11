@@ -4,7 +4,7 @@
 #include <limits.h>
 #include <string.h>
 #include"mpi.h"
-# define MAX 50000
+# define MAX 10000
 #define NUM_SPAWNS 4
 int fatorial(int N) {
   int res = 1;
@@ -96,61 +96,78 @@ int* geraNum(int N){
   return num;
 }
 int main(int argc, char *argv[]) {
-  int N = atoi(argv[1]);
-  int *dist = gerarPesos(N);
-  int *num=geraNum(N);
-  int qntCaminhos = fatorial(N - 1);
-  int ini=0;
-  int minimo=INT_MAX;
-  int c;
-  int minId;
 
 
   // váriaveis MPI
-  int  tag = 1, my_rank, num_proc, src, dst, root;
+  int  tag = 1, rank, num_proc, src, dst, root;
   char worker[40];
   int  errcodes[10], i, k, j;
 
   char processor_name[MPI_MAX_PROCESSOR_NAME];
   int name_len;
 
-  int n=N-1;
-  mostraMatrizDistancias(N, dist);
-  printf("Total de caminhos = %d\n", qntCaminhos);
-  permutar(num, 0, n-1,0,n);
-
-
-
-
-    strcpy(worker,"worker");
   
+
+    MPI_Status    status;
+    MPI_Comm      inter_comm;
+    MPI_Request   mpirequest_mr;
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
-  
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Get_processor_name(processor_name, &name_len);
-    int count=qntCaminhos/NUM_SPAWNS;
-    int sobra=qntCaminhos/NUM_SPAWNS;
+
+
+    int N = atoi(argv[1]);
+    int n=N-1;
+
+
+    int *dist = gerarPesos(N); // matriz de distancias entre vértices
+
+    int ini=0;
+    int *num=geraNum(N);  // numero dos vertices a percorrer
+
+
     double t1, t2; 
     t1 = MPI_Wtime(); 
-    j=0;
-
     src = dst = root = 0;
-    MPI_Comm_spawn(worker, MPI_ARGV_NULL, NUM_SPAWNS, MPI_INFO_NULL, root, MPI_COMM_WORLD, &inter_comm, errcodes);
-    printf("spawnou trabalhadores\n");
-    // envia valores da permutação para trabalhadores
-    for (i = 0; i < NUM_SPAWNS; i++){
-      for(k=0;k<count;k++,j++){
-          MPI_Send(perm[j], n, MPI_INT, i, tag, inter_comm);
-          MPI_Send(dist, N*N, MPI_INT, i, tag, inter_comm);
-      }
-    }
 
+    if(rank==0){
+
+      int qntCaminhos = fatorial(N - 1);
+      int minimo=INT_MAX;
+
+      int count=qntCaminhos/NUM_SPAWNS;
+  
+      mostraMatrizDistancias(N, dist);
+      printf("Total de caminhos = %d\n", qntCaminhos);
+      permutar(num, 0, n-1,0,n);
+
+      j=0;
+      // envia valores da permutação de caminhos para trabalhadores
+      for (i = 1; i < NUM_SPAWNS; i++){
+        for(k=0;k<count;k++,j++){
+          for(int m=0;m<n;m++){
+            printf("%d\t",perm[j][m]);
+          }
+            MPI_Send(perm[j], n, MPI_INT, i, tag, inter_comm);
+          printf("0 enviou caminho\n");
+        }
+      }
+
+    }
+    else if(rank==1){
+      int caminho[N-1];
+      // recebe caminho e calcula o custo
+      printf("nr %d iniciou\n",rank);
+      MPI_Recv(caminho, N-1, MPI_INT, 0, tag, inter_comm, &status);
+      int c=custo(dist,caminho,ini,N-1);
+      printf("nr %d recebeu caminho com custo %d\n",rank,c);
+    }
     t2 = MPI_Wtime(); 
     MPI_Finalize();
     exit(0);
 
-  printf("\nCusto %d\n",minimo);
+  //printf("\nCusto %d\n",minimo);
 
   return 0;
 }

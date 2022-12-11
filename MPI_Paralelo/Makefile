@@ -12,7 +12,7 @@ WARNING_FLAGS = -Wextra -Wall
 seq:
   mpicc  -fopenmp ./seq.c -o seq
 run-seq: seq
-  mpirun -np 1 -H hal02,hal03,hal04,hal05,hal06,hal07,hal08,hal09,hal10 ./seq 4
+  mpirun -np 1 -H hal02,hal03,hal04,hal05,hal06,hal07,hal08,hal09,hal10 ./seq 8
 worker:
   mpicc -fopenmp ./worker.c -o worker
 par:
