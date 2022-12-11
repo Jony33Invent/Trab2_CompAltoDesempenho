@@ -3,7 +3,10 @@
 #include <time.h>
 #include <limits.h>
 #include"mpi.h"
+
 # define MAX 370000
+
+// calculo das permutacoes das N cidades
 int fatorial(int N) {
   int res = 1;
   for (int i = 2; i <= N; i++) {
@@ -12,6 +15,7 @@ int fatorial(int N) {
   return res;
 }
 
+// geracao pseudo-aleatorio dos custos das distancias entre as cidades i e j
 int *gerarPesos(int N) {
   srand(32);
   int *dist = (int *)malloc(N*N * sizeof(int *));
@@ -26,6 +30,7 @@ int *gerarPesos(int N) {
   return dist;
 }
 
+// impressao da matriz de distancia
 void mostraMatrizDistancias(int N, int *dist) {
   printf("Matriz de distancias:\n");
   for (int i = 0; i < N; i++) {
@@ -36,6 +41,7 @@ void mostraMatrizDistancias(int N, int *dist) {
   }
 }
 
+// funcao auxiliar para troca de valores
 void swap(int *x, int *y) {
   char temp;
   temp = *x;
@@ -47,12 +53,9 @@ int perm[MAX][11];
 int permutar(int *a, int l, int r,int j, int size) {
   int i;
   if (l == r) {
-    //printf("j: %d\n",j);
     for (int i = 0; i <size; i++) {
-      //printf("%d", a[i]); 
       perm[j][i]=a[i];
     }
-    //printf("\n");
     return j+1;
   } else {
     for (i = l; i <= r; i++) {
@@ -63,6 +66,8 @@ int permutar(int *a, int l, int r,int j, int size) {
   }
   return j;
 }
+
+// calcula custo entre 2 cidades
 int custo(int*dist, int* cam, int ini, int n){
   int N=n+1;
   int custo=dist[ini*N+cam[0]];
@@ -72,26 +77,15 @@ int custo(int*dist, int* cam, int ini, int n){
   custo+=dist[cam[n-1]*N+ini];
   return custo;
 }
-int* teste(int N){
-  int test[] = {1, 2, 2, 5, 1, 4, 3, 8, 1, 1, 7, 6};
-  int k = 0;
-  int *dist = (int *)malloc(N*N * sizeof(int));
-  for (int i = 0; i < N; i++) {
-    for (int j = 0; j < N; j++) {
-      if (i == j)
-        dist[N*i+j] = 0;
-      else
-        dist[N*i+j] = test[k++];
-    }
-  }
-  return dist;
-}
+
+
 int* geraNum(int N){
  int* num=(int*)malloc(sizeof(int)*N);
   for(int i=1;i<N;i++)
     num[i-1]=i;
   return num;
 }
+
 int main(int argc, char *argv[]) {
   int N = atoi(argv[1]);
   int *dist = gerarPesos(N);
@@ -103,6 +97,7 @@ int main(int argc, char *argv[]) {
   int minId;
 
   //mostraMatrizDistancias(N, dist);
+
   printf("Total de caminhos = %d\n", qntCaminhos);
   permutar(num, 0, N-2,0,N-1);
   double t1, t2; 
