@@ -5,7 +5,6 @@
 #include <string.h>
 #include"mpi.h"
 # define MAX 10000
-#define NUM_SPAWNS 4
 int fatorial(int N) {
   int res = 1;
   for (int i = 2; i <= N; i++) {
@@ -14,7 +13,7 @@ int fatorial(int N) {
   return res;
 }
 
-int *gerarPesos(int N) {
+int *geraPesos(int N) {
   srand(time(NULL));
   int *dist = (int *)malloc(N*N * sizeof(int *));
   for (int i = 0; i < N; i++) {
@@ -38,7 +37,7 @@ void mostraMatrizDistancias(int N, int *dist) {
   }
 }
 
-void swap(int *x, int *y) {
+void troca(int *x, int *y) {
   char temp;
   temp = *x;
   *x = *y;
@@ -46,21 +45,18 @@ void swap(int *x, int *y) {
 }
 
 int perm[MAX][15];
-int permutar(int *a, int l, int r,int j, int size) {
+int permutacao(int *a, int l, int r,int j, int size) {
   int i;
   if (l == r) {
-    //printf("j: %d\n",j);
     for (int i = 0; i <size; i++) {
-      //printf("%d", a[i]); 
       perm[j][i]=a[i];
     }
-    //printf("\n");
     return j+1;
   } else {
     for (i = l; i <= r; i++) {
-      swap((a + l), (a + i));
-      j=permutar(a, l + 1, r,j,size);
-      swap((a + l), (a + i)); // backtrack
+      troca((a + l), (a + i));
+      j=permutacao(a, l + 1, r,j,size);
+      troca((a + l), (a + i));
     }
   }
   return j;
@@ -121,7 +117,7 @@ int main(int argc, char *argv[]) {
     int n=N-1;
 
 
-    int *dist = gerarPesos(N); // matriz de distancias entre vértices
+    int *dist = geraPesos(N); // matriz de distancias entre vértices
 
     int ini=0;
     int *num=geraNum(N);  // numero dos vertices a percorrer
@@ -136,38 +132,57 @@ int main(int argc, char *argv[]) {
       int qntCaminhos = fatorial(N - 1);
       int minimo=INT_MAX;
 
-      int count=qntCaminhos/NUM_SPAWNS;
+      int count=qntCaminhos/num_proc;
+      int sobra=qntCaminhos%num_proc;
   
       mostraMatrizDistancias(N, dist);
       printf("Total de caminhos = %d\n", qntCaminhos);
-      permutar(num, 0, n-1,0,n);
+      permutacao(num, 0, n-1,0,n);
 
       j=0;
       // envia valores da permutação de caminhos para trabalhadores
-      for (i = 1; i < NUM_SPAWNS; i++){
+      for (i = 1; i < num_proc; i++){
         for(k=0;k<count;k++,j++){
+          int caminhoAtual[n];
           for(int m=0;m<n;m++){
+            caminhoAtual[m]=perm[j][m];
             printf("%d\t",perm[j][m]);
           }
-            MPI_Send(perm[j], n, MPI_INT, i, tag, inter_comm);
+            MPI_Send(caminhoAtual, n, MPI_INT, i, tag, MPI_COMM_WORLD);
           printf("0 enviou caminho\n");
         }
       }
-
+       // envia o que sobrou
+      i=num_proc-1;
+      for(k=0;k<sobra;k++,j++){
+        int caminhoAtual[n];
+        for(int m=0;m<n;m++){
+          caminhoAtual[m]=perm[j][m];
+        }
+        MPI_Send(caminhoAtual, n, MPI_INT, i, tag, MPI_COMM_WORLD);
+      }
+      int c;
+      for (i = 1; i < num_proc; i++){
+        MPI_Recv(c,1,MPI_INT,i,tag,MPI_COMM_WORLD, &status);
+        minimo=min(c,minimo);
+      }
+      printf("\nCusto %d\n",minimo);
     }
-    else if(rank==1){
+    else{
       int caminho[N-1];
       // recebe caminho e calcula o custo
       printf("nr %d iniciou\n",rank);
-      MPI_Recv(caminho, N-1, MPI_INT, 0, tag, inter_comm, &status);
+      MPI_Recv(caminho, N-1, MPI_INT, 0, tag, MPI_COMM_WORLD, &status);
       int c=custo(dist,caminho,ini,N-1);
       printf("nr %d recebeu caminho com custo %d\n",rank,c);
+      // calcula custo e envia de volta para o mestre
+      c=custo(dist,perm[i],ini,N-1);
+      MPI_Send(&c, 1, MPI_INT, 0, tag, MPI_COMM_WORLD);
     }
     t2 = MPI_Wtime(); 
     MPI_Finalize();
     exit(0);
 
-  //printf("\nCusto %d\n",minimo);
 
   return 0;
 }
