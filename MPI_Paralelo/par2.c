@@ -146,10 +146,8 @@ int main(int argc, char *argv[]) {
           int caminhoAtual[n];
           for(int m=0;m<n;m++){
             caminhoAtual[m]=perm[j][m];
-            printf("%d\t",perm[j][m]);
           }
             MPI_Send(caminhoAtual, n, MPI_INT, i, tag, MPI_COMM_WORLD);
-          printf("0 enviou caminho\n");
         }
       }
        // envia o que sobrou
@@ -163,8 +161,10 @@ int main(int argc, char *argv[]) {
       }
       int c;
       for (i = 1; i < num_proc; i++){
-        MPI_Recv(c,1,MPI_INT,i,tag,MPI_COMM_WORLD, &status);
-        minimo=min(c,minimo);
+        MPI_Recv(&c,1,MPI_INT,i,tag,MPI_COMM_WORLD, &status);
+        if(c<minimo)
+          minimo=c;
+        
       }
       printf("\nCusto %d\n",minimo);
     }
